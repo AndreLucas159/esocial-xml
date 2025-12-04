@@ -1,0 +1,339 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Organizacao {
+  id        String   @id @default(uuid()) @db.Uuid
+  nome      String   @db.VarChar(255)
+  cnpj      String   @unique @db.VarChar(14)
+  email     String?  @db.VarChar(255)
+  telefone  String?  @db.VarChar(20)
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  usuarios      Usuario[]
+  empregadores  Empregador[]
+
+  @@map("organizacoes")
+}
+
+model Usuario {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizacaoId  String    @map("organizacao_id") @db.Uuid
+  nome           String    @db.VarChar(255)
+  email          String    @unique @db.VarChar(255)
+  senhaHash      String    @map("senha_hash") @db.VarChar(255)
+  role           String    @default("user") @db.VarChar(50)
+  ativo          Boolean   @default(true)
+  ultimoAcesso   DateTime? @map("ultimo_acesso")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  organizacao Organizacao @relation(fields: [organizacaoId], references: [id])
+  eventos     EventoEsocial[]
+
+  @@map("usuarios")
+}
+
+model Empregador {
+  id                    String   @id @default(uuid()) @db.Uuid
+  organizacaoId         String   @map("organizacao_id") @db.Uuid
+  razaoSocial           String   @map("razao_social") @db.VarChar(255)
+  nomeFantasia          String?  @map("nome_fantasia") @db.VarChar(255)
+  cnpj                  String   @unique @db.VarChar(14)
+  naturezaJuridica      String?  @map("natureza_juridica") @db.VarChar(10)
+  cnaePrincipal         String?  @map("cnae_principal") @db.VarChar(10)
+  classificacaoTributaria Int?   @map("classificacao_tributaria")
+  email                 String?  @db.VarChar(255)
+  telefone              String?  @db.VarChar(20)
+  logradouro            String?  @db.VarChar(255)
+  numero                String?  @db.VarChar(10)
+  complemento           String?  @db.VarChar(100)
+  bairro                String?  @db.VarChar(100)
+  cidade                String?  @db.VarChar(100)
+  uf                    String?  @db.Char(2)
+  cep                   String?  @db.VarChar(8)
+  tipoInscricao         Int      @default(1) @map("tipo_inscricao")
+  numeroInscricao       String?  @map("numero_inscricao") @db.VarChar(14)
+  ambienteEsocial       Int      @default(2) @map("ambiente_esocial")
+  certificadoPath       String?  @map("certificado_path") @db.VarChar(500)
+  certificadoSenha      String?  @map("certificado_senha") @db.VarChar(255)
+  ativo                 Boolean  @default(true)
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  organizacao   Organizacao     @relation(fields: [organizacaoId], references: [id])
+  lotacoes      Lotacao[]
+  rubricas      Rubrica[]
+  cargos        Cargo[]
+  trabalhadores Trabalhador[]
+  contratos     Contrato[]
+  competencias  Competencia[]
+  eventos       EventoEsocial[]
+
+  @@map("empregadores")
+}
+
+model Lotacao {
+  id              String   @id @default(uuid()) @db.Uuid
+  empregadorId    String   @map("empregador_id") @db.Uuid
+  codigo          String   @db.VarChar(30)
+  descricao       String   @db.VarChar(255)
+  tipoInscricao   Int?     @map("tipo_inscricao")
+  numeroInscricao String?  @map("numero_inscricao") @db.VarChar(14)
+  fpas            String?  @db.VarChar(3)
+  codTerceiros    String?  @map("cod_terceiros") @db.VarChar(4)
+  ativo           Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  empregador Empregador @relation(fields: [empregadorId], references: [id], onDelete: Cascade)
+  contratos  Contrato[]
+
+  @@unique([empregadorId, codigo])
+  @@map("lotacoes")
+}
+
+model Rubrica {
+  id             String    @id @default(uuid()) @db.Uuid
+  empregadorId   String    @map("empregador_id") @db.Uuid
+  codigo         String    @db.VarChar(30)
+  descricao      String    @db.VarChar(255)
+  natureza       Int
+  tipo           Int
+  incideCp       Boolean   @default(true) @map("incide_cp")
+  incideIrrf     Boolean   @default(true) @map("incide_irrf")
+  incideFgts     Boolean   @default(true) @map("incide_fgts")
+  vigenciaInicio DateTime  @map("vigencia_inicio") @db.Date
+  vigenciaFim    DateTime? @map("vigencia_fim") @db.Date
+  ativo          Boolean   @default(true)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  empregador       Empregador        @relation(fields: [empregadorId], references: [id], onDelete: Cascade)
+  lancamentosFolha LancamentoFolha[]
+
+  @@unique([empregadorId, codigo])
+  @@map("rubricas")
+}
+
+model Cargo {
+  id           String   @id @default(uuid()) @db.Uuid
+  empregadorId String   @map("empregador_id") @db.Uuid
+  nome         String   @db.VarChar(255)
+  cbo          String?  @db.VarChar(10)
+  descricao    String?  @db.Text
+  ativo        Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  empregador Empregador @relation(fields: [empregadorId], references: [id], onDelete: Cascade)
+  contratos  Contrato[]
+
+  @@map("cargos")
+}
+
+model Trabalhador {
+  id              String    @id @default(uuid()) @db.Uuid
+  empregadorId    String    @map("empregador_id") @db.Uuid
+  cpf             String    @unique @db.VarChar(11)
+  nome            String    @db.VarChar(255)
+  nomeSocial      String?   @map("nome_social") @db.VarChar(255)
+  dataNascimento  DateTime  @map("data_nascimento") @db.Date
+  sexo            String?   @db.Char(1)
+  racaCor         Int?      @map("raca_cor")
+  estadoCivil     Int?      @map("estado_civil")
+  grauInstrucao   Int?      @map("grau_instrucao")
+  rg              String?   @db.VarChar(20)
+  rgOrgaoEmissor  String?   @map("rg_orgao_emissor") @db.VarChar(10)
+  rgUf            String?   @map("rg_uf") @db.Char(2)
+  rgDataEmissao   DateTime? @map("rg_data_emissao") @db.Date
+  ctps            String?   @db.VarChar(20)
+  ctpsSerie       String?   @map("ctps_serie") @db.VarChar(10)
+  ctpsUf          String?   @map("ctps_uf") @db.Char(2)
+  pisPasep        String?   @map("pis_pasep") @db.VarChar(11)
+  email           String?   @db.VarChar(255)
+  telefone        String?   @db.VarChar(20)
+  logradouro      String?   @db.VarChar(255)
+  numero          String?   @db.VarChar(10)
+  complemento     String?   @db.VarChar(100)
+  bairro          String?   @db.VarChar(100)
+  cidade          String?   @db.VarChar(100)
+  uf              String?   @db.Char(2)
+  cep             String?   @db.VarChar(8)
+  banco           String?   @db.VarChar(3)
+  agencia         String?   @db.VarChar(10)
+  conta           String?   @db.VarChar(20)
+  tipoConta       Int?      @map("tipo_conta")
+  ativo           Boolean   @default(true)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  empregador  Empregador   @relation(fields: [empregadorId], references: [id], onDelete: Cascade)
+  contratos   Contrato[]
+  dependentes Dependente[]
+
+  @@map("trabalhadores")
+}
+
+model Contrato {
+  id              String    @id @default(uuid()) @db.Uuid
+  trabalhadorId   String    @map("trabalhador_id") @db.Uuid
+  empregadorId    String    @map("empregador_id") @db.Uuid
+  cargoId         String?   @map("cargo_id") @db.Uuid
+  lotacaoId       String?   @map("lotacao_id") @db.Uuid
+  matricula       String    @db.VarChar(30)
+  categoria       Int
+  dataAdmissao    DateTime  @map("data_admissao") @db.Date
+  dataDesligamento DateTime? @map("data_desligamento") @db.Date
+  salario         Decimal   @db.Decimal(15, 2)
+  tipoSalario     Int?      @map("tipo_salario")
+  tipoJornada     Int?      @map("tipo_jornada")
+  horasSemanais   Int?      @map("horas_semanais")
+  optanteFgts     Boolean   @default(true) @map("optante_fgts")
+  dataOpcaoFgts   DateTime? @map("data_opcao_fgts") @db.Date
+  status          String    @default("ativo") @db.VarChar(20)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  trabalhador        Trabalhador          @relation(fields: [trabalhadorId], references: [id], onDelete: Cascade)
+  empregador         Empregador           @relation(fields: [empregadorId], references: [id], onDelete: Cascade)
+  cargo              Cargo?               @relation(fields: [cargoId], references: [id])
+  lotacao            Lotacao?             @relation(fields: [lotacaoId], references: [id])
+  afastamentos       Afastamento[]
+  lancamentosFolha   LancamentoFolha[]
+  totalizadoresFolha TotalizadorFolha[]
+
+  @@unique([empregadorId, matricula])
+  @@map("contratos")
+}
+
+model Dependente {
+  id             String   @id @default(uuid()) @db.Uuid
+  trabalhadorId  String   @map("trabalhador_id") @db.Uuid
+  nome           String   @db.VarChar(255)
+  cpf            String?  @db.VarChar(11)
+  dataNascimento DateTime @map("data_nascimento") @db.Date
+  tipo           Int
+  depIrrf        Boolean  @default(false) @map("dep_irrf")
+  depSf          Boolean  @default(false) @map("dep_sf")
+  ativo          Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  trabalhador Trabalhador @relation(fields: [trabalhadorId], references: [id], onDelete: Cascade)
+
+  @@map("dependentes")
+}
+
+model Afastamento {
+  id         String    @id @default(uuid()) @db.Uuid
+  contratoId String    @map("contrato_id") @db.Uuid
+  motivo     Int
+  dataInicio DateTime  @map("data_inicio") @db.Date
+  dataFim    DateTime? @map("data_fim") @db.Date
+  observacao String?   @db.Text
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  contrato Contrato @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+
+  @@map("afastamentos")
+}
+
+model Competencia {
+  id              String    @id @default(uuid()) @db.Uuid
+  empregadorId    String    @map("empregador_id") @db.Uuid
+  ano             Int
+  mes             Int
+  status          String    @default("aberta") @db.VarChar(20)
+  dataFechamento  DateTime? @map("data_fechamento")
+  dataEnvio       DateTime? @map("data_envio")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  empregador         Empregador          @relation(fields: [empregadorId], references: [id], onDelete: Cascade)
+  lancamentosFolha   LancamentoFolha[]
+  totalizadoresFolha TotalizadorFolha[]
+
+  @@unique([empregadorId, ano, mes])
+  @@map("competencias")
+}
+
+model LancamentoFolha {
+  id             String   @id @default(uuid()) @db.Uuid
+  competenciaId  String   @map("competencia_id") @db.Uuid
+  contratoId     String   @map("contrato_id") @db.Uuid
+  rubricaId      String?  @map("rubrica_id") @db.Uuid
+  codigoRubrica  String   @map("codigo_rubrica") @db.VarChar(30)
+  descricao      String?  @db.VarChar(255)
+  quantidade     Decimal  @default(1) @db.Decimal(10, 2)
+  valor          Decimal  @db.Decimal(15, 2)
+  baseInss       Decimal? @map("base_inss") @db.Decimal(15, 2)
+  baseIrrf       Decimal? @map("base_irrf") @db.Decimal(15, 2)
+  baseFgts       Decimal? @map("base_fgts") @db.Decimal(15, 2)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  competencia Competencia @relation(fields: [competenciaId], references: [id], onDelete: Cascade)
+  contrato    Contrato    @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+  rubrica     Rubrica?    @relation(fields: [rubricaId], references: [id])
+
+  @@map("lancamentos_folha")
+}
+
+model TotalizadorFolha {
+  id              String   @id @default(uuid()) @db.Uuid
+  competenciaId   String   @map("competencia_id") @db.Uuid
+  contratoId      String   @map("contrato_id") @db.Uuid
+  totalProventos  Decimal  @default(0) @map("total_proventos") @db.Decimal(15, 2)
+  totalDescontos  Decimal  @default(0) @map("total_descontos") @db.Decimal(15, 2)
+  salarioLiquido  Decimal  @default(0) @map("salario_liquido") @db.Decimal(15, 2)
+  baseInss        Decimal  @default(0) @map("base_inss") @db.Decimal(15, 2)
+  valorInss       Decimal  @default(0) @map("valor_inss") @db.Decimal(15, 2)
+  baseIrrf        Decimal  @default(0) @map("base_irrf") @db.Decimal(15, 2)
+  valorIrrf       Decimal  @default(0) @map("valor_irrf") @db.Decimal(15, 2)
+  baseFgts        Decimal  @default(0) @map("base_fgts") @db.Decimal(15, 2)
+  valorFgts       Decimal  @default(0) @map("valor_fgts") @db.Decimal(15, 2)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  competencia Competencia @relation(fields: [competenciaId], references: [id], onDelete: Cascade)
+  contrato    Contrato    @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+
+  @@unique([competenciaId, contratoId])
+  @@map("totalizadores_folha")
+}
+
+model EventoEsocial {
+  id                 String    @id @default(uuid()) @db.Uuid
+  empregadorId       String    @map("empregador_id") @db.Uuid
+  tipoEvento         String    @map("tipo_evento") @db.VarChar(10)
+  numeroRecibo       String?   @map("numero_recibo") @db.VarChar(50)
+  xmlGerado          String?   @map("xml_gerado") @db.Text
+  xmlAssinado        String?   @map("xml_assinado") @db.Text
+  status             String    @default("pendente") @db.VarChar(20)
+  dataEnvio          DateTime? @map("data_envio")
+  dataProcessamento  DateTime? @map("data_processamento")
+  protocolo          String?   @db.VarChar(50)
+  mensagemRetorno    String?   @map("mensagem_retorno") @db.Text
+  codigoRetorno      String?   @map("codigo_retorno") @db.VarChar(10)
+  usuarioId          String?   @map("usuario_id") @db.Uuid
+  tentativas         Int       @default(0)
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  empregador Empregador @relation(fields: [empregadorId], references: [id], onDelete: Cascade)
+  usuario    Usuario?   @relation(fields: [usuarioId], references: [id])
+
+  @@map("eventos_esocial")
+}

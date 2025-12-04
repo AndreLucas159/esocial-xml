@@ -1,0 +1,5 @@
+{
+  "name": "eSocial XML Builder",
+  "description": "A Department of Personnel module to generate, validate, and preview XML events for the Brazilian eSocial government system.",
+  "requestFramePermissions": []
+}
