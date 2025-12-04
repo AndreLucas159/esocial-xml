@@ -11,7 +11,8 @@ import {
   Heart,
   Scale,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  List
 } from 'lucide-react';
 import { EventType } from '../types';
 
@@ -66,6 +67,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSelectEvent, selectedEventId
         >
           <LayoutDashboard size={20} />
           <span className="font-semibold">Dashboard</span>
+        </button>
+
+        {/* Gerenciar Eventos */}
+        <button
+          onClick={() => onSelectEvent('EVENTS')}
+          className={`w-full flex items-center gap-3 px-4 py-3 mx-2 rounded-lg text-sm transition-all ${selectedEventId === 'EVENTS' ? 'bg-green-600 text-white shadow-lg' : 'text-esocial-100 hover:bg-esocial-800 hover:text-white'}`}
+        >
+          <List size={20} />
+          <span className="font-semibold">Gerenciar Eventos</span>
         </button>
 
         <div className="px-4 py-2 mt-4">

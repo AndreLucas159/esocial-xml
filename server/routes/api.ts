@@ -69,5 +69,6 @@ router.put('/eventos/:eventoId/status', authMiddleware, EventoController.updateE
 router.get('/dashboard/stats/:empregadorId', DashboardController.getStats);
 router.get('/dashboard/recent-events/:empregadorId', DashboardController.getRecentEvents);
 router.get('/dashboard/summary/:empregadorId', DashboardController.getSummary);
+router.get('/dashboard/events/:empregadorId', DashboardController.getAllEvents);
 
 export default router;

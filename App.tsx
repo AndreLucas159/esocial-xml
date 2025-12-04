@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { EventForm } from './components/EventForm';
 import { Dashboard } from './components/Dashboard';
+import { EventsManagement } from './components/EventsManagement';
 import { EVENT_SCHEMAS } from './services/eventLibrary';
 import { EventType } from './types';
 import { AlertTriangle } from 'lucide-react';
@@ -12,6 +13,7 @@ const App: React.FC = () => {
 
   const selectedSchema = EVENT_SCHEMAS[selectedEventId];
   const isDashboard = selectedEventId === 'DASHBOARD';
+  const isEventsManagement = selectedEventId === 'EVENTS';
 
   return (
     <div className="flex h-screen w-full bg-gray-50 font-sans overflow-hidden">
@@ -24,10 +26,15 @@ const App: React.FC = () => {
           {isDashboard ? (
             <Dashboard
               empregadorId={empregadorId}
-              onNavigateToEvents={() => console.log('Navigate to events')}
+              onNavigateToEvents={() => setSelectedEventId('EVENTS')}
               onNavigateToWorkers={() => console.log('Navigate to workers')}
               onNavigateToCompetencias={() => console.log('Navigate to competencias')}
               onSelectEvent={(eventType) => setSelectedEventId(eventType)}
+            />
+          ) : isEventsManagement ? (
+            <EventsManagement
+              empregadorId={empregadorId}
+              onBack={() => setSelectedEventId('DASHBOARD')}
             />
           ) : (
             <>

@@ -1,12 +1,11 @@
-import { Response } from 'express';
-import { AuthRequest } from '../middleware/auth';
+import { Request, Response } from 'express';
 import prisma from '../db/prisma';
 
 export class DashboardController {
     /**
      * Obter estatísticas do dashboard
      */
-    static async getStats(req: AuthRequest, res: Response) {
+    static async getStats(req: Request, res: Response) {
         try {
             let { empregadorId } = req.params;
 
@@ -97,7 +96,7 @@ export class DashboardController {
     /**
      * Obter eventos recentes
      */
-    static async getRecentEvents(req: AuthRequest, res: Response) {
+    static async getRecentEvents(req: Request, res: Response) {
         try {
             let { empregadorId } = req.params;
             const limit = parseInt(req.query.limit as string) || 10;
@@ -137,9 +136,78 @@ export class DashboardController {
     }
 
     /**
+     * Obter todos os eventos com filtros e paginação
+     */
+    static async getAllEvents(req: Request, res: Response) {
+        try {
+            let { empregadorId } = req.params;
+            const { status, tipoEvento, search, page = '1', limit = '20' } = req.query;
+
+            if (empregadorId === 'default-empregador-id') {
+                const firstEmpregador = await prisma.empregador.findFirst();
+                if (firstEmpregador) {
+                    empregadorId = firstEmpregador.id;
+                } else {
+                    return res.json({
+                        eventos: [],
+                        total: 0,
+                        page: 1,
+                        totalPages: 0
+                    });
+                }
+            }
+
+            const pageNum = parseInt(page as string);
+            const limitNum = parseInt(limit as string);
+            const skip = (pageNum - 1) * limitNum;
+
+            // Build where clause
+            const where: any = { empregadorId };
+            if (status) where.status = status;
+            if (tipoEvento) where.tipoEvento = tipoEvento;
+            if (search) {
+                where.OR = [
+                    { tipoEvento: { contains: search as string, mode: 'insensitive' } },
+                    { protocolo: { contains: search as string, mode: 'insensitive' } },
+                    { numeroRecibo: { contains: search as string, mode: 'insensitive' } }
+                ];
+            }
+
+            // Get total count and events
+            const [total, eventos] = await Promise.all([
+                prisma.eventoEsocial.count({ where }),
+                prisma.eventoEsocial.findMany({
+                    where,
+                    orderBy: { createdAt: 'desc' },
+                    skip,
+                    take: limitNum,
+                    include: {
+                        usuario: {
+                            select: {
+                                nome: true,
+                                email: true
+                            }
+                        }
+                    }
+                })
+            ]);
+
+            res.json({
+                eventos,
+                total,
+                page: pageNum,
+                totalPages: Math.ceil(total / limitNum)
+            });
+        } catch (error) {
+            console.error('Erro ao obter todos os eventos:', error);
+            res.status(500).json({ error: 'Erro ao obter eventos' });
+        }
+    }
+
+    /**
      * Obter resumo completo do dashboard
      */
-    static async getSummary(req: AuthRequest, res: Response) {
+    static async getSummary(req: Request, res: Response) {
         try {
             let { empregadorId } = req.params;
 
