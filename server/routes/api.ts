@@ -5,6 +5,7 @@ import { TrabalhadorController } from '../controllers/trabalhadorController';
 import { FolhaController } from '../controllers/folhaController';
 import { EventoController } from '../controllers/eventoController';
 import { DashboardController } from '../controllers/dashboardController';
+import { EventGenerationController } from '../controllers/eventGenerationController';
 import { authMiddleware } from '../middleware/auth';
 
 const router = express.Router();
@@ -70,5 +71,11 @@ router.get('/dashboard/stats/:empregadorId', DashboardController.getStats);
 router.get('/dashboard/recent-events/:empregadorId', DashboardController.getRecentEvents);
 router.get('/dashboard/summary/:empregadorId', DashboardController.getSummary);
 router.get('/dashboard/events/:empregadorId', DashboardController.getAllEvents);
+
+// Event Generation from Forms (public for testing)
+router.post('/events/generate/s1000', EventGenerationController.generateS1000FromForm);
+router.post('/events/generate/s1010', EventGenerationController.generateS1010FromForm);
+router.post('/events/generate/s1200', EventGenerationController.generateS1200FromForm);
+router.post('/events/generate/:eventType', EventGenerationController.generateEvent);
 
 export default router;

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StatCard } from './StatCard';
 import { EventsList } from './EventsList';
 import { QuickActions } from './QuickActions';
+import { EventGenerationModal } from './EventGenerationModal';
 import { Users, FileText, Calendar, AlertCircle, RefreshCw, TrendingUp } from 'lucide-react';
 
 interface DashboardStats {
@@ -45,6 +46,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    // Event Generation Modal State
+    const [showEventModal, setShowEventModal] = useState(false);
+    const [selectedEventType, setSelectedEventType] = useState<string | null>(null);
+
     const loadDashboardData = async () => {
         setLoading(true);
         setError(null);
@@ -70,6 +75,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
     useEffect(() => {
         loadDashboardData();
     }, [empregadorId]);
+
+    const handleGenerateEvent = (eventType: string) => {
+        setSelectedEventType(eventType);
+        setShowEventModal(true);
+    };
+
+    const handleEventGenerationSuccess = () => {
+        setShowEventModal(false);
+        setSelectedEventType(null);
+        loadDashboardData(); // Refresh dashboard data
+    };
 
     if (loading) {
         return (
@@ -122,8 +138,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <QuickActions
                 onNewWorker={onNavigateToWorkers}
                 onNewCompetencia={onNavigateToCompetencias}
-                onGenerateS1000={() => onSelectEvent?.('S1000')}
-                onGenerateS1200={() => onSelectEvent?.('S1200')}
+                onGenerateS1000={() => handleGenerateEvent('S-1000')}
+                onGenerateS1200={() => handleGenerateEvent('S-1200')}
                 onViewAllEvents={onNavigateToEvents}
             />
 
@@ -155,6 +171,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     competências em processamento. Use as ações rápidas para agilizar seu trabalho diário.
                 </p>
             </div>
+
+            {/* Event Generation Modal */}
+            <EventGenerationModal
+                eventType={selectedEventType}
+                empregadorId={empregadorId}
+                isOpen={showEventModal}
+                onClose={() => {
+                    setShowEventModal(false);
+                    setSelectedEventType(null);
+                }}
+                onSuccess={handleEventGenerationSuccess}
+            />
         </div>
     );
 };
